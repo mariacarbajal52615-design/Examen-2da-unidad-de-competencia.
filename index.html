@@ -1,0 +1,454 @@
+<lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen: Valoración de Costos Conjuntos (NIF C-4)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Gris muy claro */
+        }
+        /* Colores institucionales ITSON (Aproximación) */
+        .bg-itson-blue { background-color: #003b5c; }
+        .text-itson-blue { color: #003b5c; }
+        .border-itson-blue { border-color: #003b5c; }
+        
+        .radio-custom:checked + div {
+            background-color: #ebf8ff;
+            border-color: #3182ce;
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col">
+
+    <!-- Encabezado -->
+    <header class="bg-itson-blue text-white py-6 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Valoración de Costos Conjuntos (NIF C-4)</h1>
+            <p class="mt-2 text-blue-200">Evaluación Académica</p>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-8">
+        
+        <!-- SECCIÓN 1: INGRESO DE DATOS (Pantalla de inicio) -->
+        <section id="login-section" class="bg-white rounded-xl shadow-lg p-6 md:p-10 max-w-lg mx-auto border-t-4 border-itson-blue">
+            <h2 class="text-xl font-semibold mb-6 text-center text-itson-blue">Datos del Estudiante</h2>
+            
+            <div id="login-error" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+                Por favor, completa todos los campos.
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                    <input type="text" id="student-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Ej. Juan Pérez López" required>
+                </div>
+                <div>
+                    <label for="student-id" class="block text-sm font-medium text-gray-700 mb-1">Matrícula (ID)</label>
+                    <input type="text" id="student-id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="Ej. 123456" required>
+                </div>
+                <button onclick="startExam()" class="w-full mt-6 bg-itson-blue hover:bg-blue-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md">
+                    Comenzar Examen
+                </button>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: CUESTIONARIO (Oculta al inicio) -->
+        <section id="quiz-section" class="hidden">
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-10 border-t-4 border-itson-blue">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b">
+                    <div>
+                        <p class="font-semibold text-itson-blue" id="display-student-name">Nombre</p>
+                        <p class="text-sm text-gray-500" id="display-student-id">ID: 000000</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">Preguntas</p>
+                        <p class="font-bold text-lg">30</p>
+                    </div>
+                </div>
+
+                <div id="validation-msg" class="hidden mb-6 p-4 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-lg">
+                    Faltan preguntas por responder. Por favor, revisa el cuestionario.
+                </div>
+
+                <form id="exam-form" onsubmit="submitExam(event)">
+                    <!-- Contenedor dinámico de preguntas -->
+                    <div id="questions-container" class="space-y-8">
+                        <!-- Las preguntas se inyectarán aquí vía JS -->
+                    </div>
+
+                    <div class="mt-10 pt-6 border-t flex justify-end">
+                        <button type="submit" id="submit-btn" class="bg-itson-blue hover:bg-blue-900 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-md flex items-center">
+                            <span id="btn-text">Enviar Respuestas</span>
+                            <svg id="btn-spinner" class="hidden animate-spin ml-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: RESULTADOS (Oculta al inicio) -->
+        <section id="results-section" class="hidden">
+            <div class="bg-white rounded-xl shadow-lg p-8 md:p-12 max-w-2xl mx-auto text-center border-t-4 border-green-500">
+                <div class="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">¡Examen Enviado!</h2>
+                <p class="text-gray-600 mb-8">Tus resultados han sido registrados y enviados al profesor exitosamente.</p>
+                
+                <div class="bg-gray-50 rounded-lg p-6 mb-8 border">
+                    <p class="text-sm text-gray-500 uppercase tracking-wide font-semibold mb-1">Tu Calificación Final</p>
+                    <p id="final-score" class="text-5xl font-bold text-itson-blue">0/30</p>
+                    <p id="final-percentage" class="text-lg text-gray-600 mt-2 font-medium">0%</p>
+                </div>
+
+                <p class="text-sm text-gray-500">Ya puedes cerrar esta ventana.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-sm mt-auto">
+        <p>Sistema de Evaluación Dinámica • Generado para GitHub Pages</p>
+    </footer>
+
+    <!-- LÓGICA JAVASCRIPT -->
+    <script>
+        // CONFIGURACIÓN DEL PROFESOR
+        // ==========================================
+        // CAMBIA ESTE CORREO POR TU CORREO REAL
+        const emailProfesor = "tu_correo@ejemplo.com"; 
+        // ==========================================
+
+        // Base de datos de preguntas
+        const questionsData = [
+            {
+                q: "¿Qué característica define principalmente a la producción conjunta?",
+                options: ["Genera inevitablemente múltiples productos de manera simultánea.", "Genera un solo producto de alto valor y desecha el resto.", "No genera subproductos en ninguna etapa del proceso.", "Solo ocurre en la industria química pesada."],
+                ans: 0
+            },
+            {
+                q: "De acuerdo con la matriz conceptual, ¿cuál es el rasgo distintivo de los coproductos?",
+                options: ["Son un resultado incidental del proceso productivo.", "Tienen un alto valor comercial en relación con la producción.", "Se descartan inmediatamente por su toxicidad.", "Tienen un valor de venta marginal o nulo."],
+                ans: 1
+            },
+            {
+                q: "¿Cómo se clasifican los resultados incidentales de un proceso que tienen un valor de venta marginal?",
+                options: ["Coproductos.", "Materia prima indirecta.", "Desechos tóxicos.", "Subproductos."],
+                ans: 3
+            },
+            {
+                q: "¿Qué evento crítico ocurre exactamente en el 'Punto de Separación' (Split-Off)?",
+                options: ["Los productos se vuelven físicamente identificables.", "Se venden los productos al cliente final.", "Termina la producción exclusiva de los subproductos.", "Se compran los insumos y materias primas."],
+                ans: 0
+            },
+            {
+                q: "Después del punto de separación, ¿cómo se denominan los costos aplicados para transformar la crema en mantequilla?",
+                options: ["Costos conjuntos.", "Costos separables.", "Costos hundidos.", "Costos de oportunidad."],
+                ans: 1
+            },
+            {
+                q: "Según la NIF C-4, ¿cómo debe tratarse contablemente el gasto por la instalación de una planta de tratamiento de aguas residuales?",
+                options: ["Se resta directamente de las ventas del periodo.", "Es un gasto de administración exclusivamente.", "Debe sumarse a los Costos Indirectos de Fabricación.", "No se registra en la contabilidad financiera."],
+                ans: 2
+            },
+            {
+                q: "En la estructura de valoración financiera, ¿cuál es el segundo paso después de acumular el costo conjunto?",
+                options: ["Deducir el VNR del subproducto.", "Asignar el costo neto a los coproductos.", "Evaluar el deterioro de los inventarios.", "Vender los productos al mercado."],
+                ans: 0
+            },
+            {
+                q: "Si el costo tradicional de producción es de $190,000 y el costo ecológico de la planta tratadora es de $15,000, ¿cuál es el Costo Conjunto Bruto?",
+                options: ["190,000", "205,000", "175,000", "215,000"],
+                ans: 1
+            },
+            {
+                q: "Para calcular el Valor Neto de Realización (VNR) del bagazo, ¿qué elementos intervienen en la resta?",
+                options: ["Venta estimada más flete directo.", "Costo de producción menos ingresos por ventas.", "Únicamente el precio de venta estimada sin deducciones.", "Venta estimada menos flete directo."],
+                ans: 3
+            },
+            {
+                q: "Si el costo conjunto bruto es de $205,000 y el VNR del subproducto es de $10,000, ¿cuál es el costo neto a repartir entre los coproductos?",
+                options: ["195,000", "215,000", "205,000", "185,000"],
+                ans: 0
+            },
+            {
+                q: "De acuerdo con el material, ¿cuál es el método preferido por la NIF C-4 para contabilizar la salida del subproducto?",
+                options: ["Reconocimiento en Otros Ingresos.", "Reducción a los costos conjuntos.", "Método de Venta Secundaria.", "Transformación para Uso Interno."],
+                ans: 1
+            },
+            {
+                q: "En el paso 3 de la NIF C-4, ¿cuál es la base fundamental para distribuir el costo conjunto entre los coproductos?",
+                options: ["El peso físico de los productos terminados.", "El volumen exacto medido en litros o kilos.", "El valor de venta relativo en la separación.", "El costo de producción individual histórico."],
+                ans: 2
+            },
+            {
+                q: "Si el Jugo de Naranja genera el 50% de los ingresos totales y el Costo Neto a repartir es de $195,000, ¿cuánto costo absorbe?",
+                options: ["195,000", "97,500", "48,750", "100,000"],
+                ans: 1
+            },
+            {
+                q: "¿Cuál es la premisa principal que sustenta el método de asignación por Valor de Mercado Relativo?",
+                options: ["Todos los coproductos absorben los costos por partes iguales.", "El producto que pesa más absorbe la mayor cantidad de costos.", "Quien aporta menos ingresos, absorbe más costos para compensar.", "Quien aporta más ingresos, absorbe más costos."],
+                ans: 3
+            },
+            {
+                q: "En el caso Lácteos del Valle (Método de Unidades Físicas), si los costos conjuntos son $1,000,000 y hay 80,000 unidades, ¿cuál es el factor unitario?",
+                options: ["10.00", "15.50", "12.50", "12.00"],
+                ans: 2
+            },
+            {
+                q: "¿Cuál es la principal limitación del Método de Unidades Físicas descrita en el documento?",
+                options: ["Asigna el mismo costo a productos baratos y premium.", "Es matemáticamente muy difícil de calcular y aplicar.", "No está permitido en absoluto por la NIF C-4.", "Solo sirve para productos líquidos, no sólidos."],
+                ans: 0
+            },
+            {
+                q: "Según el párrafo 46.4.1 de la NIF, ¿a qué valor deben presentarse los inventarios al cierre del periodo?",
+                options: ["Siempre al precio de venta esperado en el mercado.", "Al Costo Histórico o al VNR, el que sea menor.", "Exclusivamente al Costo Histórico de producción.", "Al valor más alto que ofrezca el mercado actual."],
+                ans: 1
+            },
+            {
+                q: "Si el costo en libros de la Toronja es $5.85/L y su nuevo VNR es $4.50/L, ¿cuál es el castigo por deterioro por litro?",
+                options: ["2.35", "1.00", "1.35", "0.85"],
+                ans: 2
+            },
+            {
+                q: "En el Escenario Toronja, con 2,000 litros en inventario y un castigo de $1.35/L, ¿cuál es la Pérdida Total por Deterioro?",
+                options: ["2,700", "5,400", "1,350", "2,000"],
+                ans: 0
+            },
+            {
+                q: "En el asiento contable (P1) para el Reconocimiento del Subproducto, ¿a qué cuenta se realiza el abono por $10,000?",
+                options: ["Almacén de Subproductos.", "Producción en Proceso.", "Bancos.", "Costo de Ventas."],
+                ans: 1
+            },
+            {
+                q: "Al registrar la Terminación de Coproductos (P2), ¿a qué cuenta se carga el costo neto distribuido de $195,000?",
+                options: ["Producción en Proceso.", "Ventas.", "Almacén Artículos Terminados.", "Clientes."],
+                ans: 2
+            },
+            {
+                q: "En el ajuste por Deterioro (P3), ¿qué cuenta recibe el abono por $2,700?",
+                options: ["Gastos Pérdida por Deterioro.", "Bancos.", "Proveedores.", "Estimación Deterioro Inventarios."],
+                ans: 3
+            },
+            {
+                q: "En el Estado de Resultados Integral, ¿en qué sección impacta el Costo Ecológico?",
+                options: ["Se muestra como Gasto Administrativo independiente.", "Se incluye diluido dentro del Costo de Ventas.", "Es un Gasto Financiero por tratarse de una inversión.", "Se omite del estado de resultados hasta su venta."],
+                ans: 1
+            },
+            {
+                q: "Según el resumen estratégico, ¿qué efecto tiene el Valor Neto de Realización (VNR) de los subproductos?",
+                options: ["Reduce de manera directa la carga financiera.", "Aumenta los costos operativos de la empresa.", "No tiene ningún efecto en la utilidad bruta.", "Genera una pérdida inmediata en el periodo."],
+                ans: 0
+            },
+            {
+                q: "En el panorama industrial de Lácteos del Valle, ¿qué producto se clasifica como subproducto?",
+                options: ["Queso.", "Crema.", "Suero lácteo.", "Leche descremada."],
+                ans: 2
+            },
+            {
+                q: "¿Cuáles son los subproductos típicos en el proceso de molienda de la Caña de Azúcar?",
+                options: ["Azúcar refinada y Miel.", "Melaza y Bagazo.", "Jugo de caña y Néctar.", "Alcohol etílico y Levadura."],
+                ans: 1
+            },
+            {
+                q: "¿Qué acción corporativa es obligatoria para evitar mantener activos inflados, según el resumen estratégico?",
+                options: ["Aumentar constantemente los precios de venta.", "Producir más volumen para diluir el costo.", "Monitorear el VNR frente al Costo.", "Ignorar las variaciones por deterioro."],
+                ans: 2
+            },
+            {
+                q: "En el Estado de Resultados Integral presentado en el material, ¿a cuánto ascienden las Ventas Netas combinadas con Otros Ingresos?",
+                options: ["169,650", "363,000", "185,650", "358,000"],
+                ans: 1
+            },
+            {
+                q: "¿Qué elemento incluye explícitamente el párrafo 44.3.4 de la NIF C-4 dentro de los gastos incurridos para inventarios?",
+                options: ["Gastos de marketing y publicidad.", "Gastos de administración de oficina.", "Comisiones bancarias y financieras.", "Gastos ambientales."],
+                ans: 3
+            },
+            {
+                q: "En el caso 'Citrus del Yaqui', ¿qué costo asume el producto Jugo de Toronja bajo el método de valor de mercado?",
+                options: ["58,500", "97,500", "39,000", "120,000"],
+                ans: 0
+            }
+        ];
+
+        // Variables de estado
+        let studentData = { name: '', id: '' };
+
+        // Función para iniciar el examen
+        function startExam() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            const idInput = document.getElementById('student-id').value.trim();
+            const errorDiv = document.getElementById('login-error');
+
+            if (nameInput === '' || idInput === '') {
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            errorDiv.classList.add('hidden');
+            studentData.name = nameInput;
+            studentData.id = idInput;
+
+            // Actualizar UI
+            document.getElementById('display-student-name').textContent = studentData.name;
+            document.getElementById('display-student-id').textContent = 'ID: ' + studentData.id;
+            
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('quiz-section').classList.remove('hidden');
+
+            renderQuestions();
+        }
+
+        // Renderizar las preguntas en el DOM
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+
+            questionsData.forEach((question, index) => {
+                const qNum = index + 1;
+                
+                let optionsHtml = '';
+                question.options.forEach((opt, optIndex) => {
+                    optionsHtml += `
+                        <label class="cursor-pointer relative flex items-start">
+                            <input type="radio" name="q${index}" value="${optIndex}" class="radio-custom sr-only peer">
+                            <div class="w-full p-4 border border-gray-200 rounded-lg peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full mr-3 flex items-center justify-center peer-checked:border-blue-500">
+                                        <div class="w-2.5 h-2.5 bg-blue-500 rounded-full opacity-0 peer-checked:opacity-100"></div>
+                                    </div>
+                                    <span class="text-gray-700">${opt}</span>
+                                </div>
+                            </div>
+                        </label>
+                    `;
+                });
+
+                const questionBlock = `
+                    <div class="bg-white rounded-lg" id="block-q${index}">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">
+                            <span class="text-itson-blue font-bold mr-1">${qNum}.</span> ${question.q}
+                        </h3>
+                        <div class="space-y-3">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += questionBlock;
+            });
+        }
+
+        // Evaluar y enviar el examen
+        function submitExam(event) {
+            event.preventDefault();
+            
+            const validationMsg = document.getElementById('validation-msg');
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnSpinner = document.getElementById('btn-spinner');
+
+            let score = 0;
+            let answeredCount = 0;
+            let reportDetails = "";
+
+            // Evaluar respuestas
+            for (let i = 0; i < questionsData.length; i++) {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                const block = document.getElementById(`block-q${i}`);
+                
+                if (selected) {
+                    answeredCount++;
+                    const selectedVal = parseInt(selected.value);
+                    const isCorrect = (selectedVal === questionsData[i].ans);
+                    
+                    if (isCorrect) {
+                        score++;
+                    }
+
+                    // Preparar texto para el profesor
+                    reportDetails += `P${i+1}: ${questionsData[i].q}\n`;
+                    reportDetails += `Tuvo: ${isCorrect ? 'CORRECTO' : 'INCORRECTO'} (Respondió: ${questionsData[i].options[selectedVal]})\n\n`;
+                    
+                    block.classList.remove('border-l-4', 'border-red-500', 'pl-4');
+                } else {
+                    // Marcar visualmente la que falta
+                    block.classList.add('border-l-4', 'border-red-500', 'pl-4');
+                }
+            }
+
+            // Validar que todas estén respondidas
+            if (answeredCount < questionsData.length) {
+                validationMsg.classList.remove('hidden');
+                validationMsg.textContent = `Faltan preguntas por responder (${answeredCount} de ${questionsData.length}). Las preguntas faltantes están marcadas en rojo.`;
+                // Hacer scroll suave hacia arriba
+                validationMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            validationMsg.classList.add('hidden');
+            
+            // Estado de carga
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            btnText.textContent = "Procesando...";
+            btnSpinner.classList.remove('hidden');
+
+            // Calcular porcentajes
+            const percentage = ((score / questionsData.length) * 100).toFixed(1);
+
+            // Preparar carga de datos para FormSubmit (AJAX)
+            const payload = {
+                _subject: `Resultados Examen Costos: ${studentData.name} - ${studentData.id}`,
+                Nombre_Alumno: studentData.name,
+                Matricula: studentData.id,
+                Calificacion_Puntos: `${score} de ${questionsData.length}`,
+                Calificacion_Porcentaje: `${percentage}%`,
+                Detalle_Respuestas: reportDetails
+            };
+
+            // Enviar usando Fetch API
+            fetch(`https://formsubmit.co/ajax/maria.carbajal52615@potros.itson.edu.mx`, {
+                method: "POST",
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Mostrar pantalla de éxito
+                document.getElementById('quiz-section').classList.add('hidden');
+                document.getElementById('results-section').classList.remove('hidden');
+                
+                // Imprimir calificación para el alumno
+                document.getElementById('final-score').textContent = `${score}/${questionsData.length}`;
+                document.getElementById('final-percentage').textContent = `${percentage}%`;
+                
+                // Desplazar hacia arriba
+                window.scrollTo(0, 0);
+            })
+            .catch(error => {
+                console.error('Error al enviar:', error);
+                alert("Hubo un problema al enviar los resultados. Por favor, toma una captura de pantalla de esta página y repórtalo al profesor.");
+                
+                // Restaurar botón en caso de error
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btnText.textContent = "Reintentar Envío";
+                btnSpinner.classList.add('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
